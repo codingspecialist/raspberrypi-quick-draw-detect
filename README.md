@@ -46,27 +46,3 @@ data/
 
 ---
 MIT License
-
-실행 중 오류가 발생했습니다:
-
-```
-ImportError: `fetch_openml` requires pandas.
-```
-
-### 원인
-- scikit-learn의 `fetch_openml` 함수는 내부적으로 pandas가 필요합니다.
-- requirements.txt에 pandas가 누락되어 있습니다.
-
----
-
-## 해결 방법
-
-1. **requirements.txt에 pandas 추가**
-2. 아래 명령어로 설치
-   ```bash
-   pip install -r requirements.txt
-   ```
-
----
-
-바로 requirements.txt에 pandas를 추가하고, 실행까지 자동화해드릴까요? 
