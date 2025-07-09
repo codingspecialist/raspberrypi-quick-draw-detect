@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>숫자 그림판 - AI 숫자 인식</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #e3eafc; margin: 0; padding: 0; }
+        .container { max-width: 900px; margin: 30px auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px #0001; padding: 24px; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { margin: 0; font-size: 2.2em; color: #2d5be3; }
+        .header p { color: #555; margin: 8px 0 0 0; }
+        .main-content { display: flex; gap: 24px; }
+        .canvas-section { flex: 2; height: 400px; }
+        .controls-section { flex: 1; }
+        .canvas-container { border: 2px solid #d0d7e6; border-radius: 8px; background: #fff; width: 100%; height: 100%; }
+        #drawingCanvas { display: block; background: #fff; cursor: crosshair; width: 100%; height: 100%; }
+        .instructions { background: #f0f4ff; border-left: 4px solid #2d5be3; padding: 12px; border-radius: 6px; margin-bottom: 18px; }
+        .instructions ul { margin: 0; padding-left: 18px; }
+        .instructions li { margin-bottom: 4px; }
+        .btn { padding: 8px 18px; border: none; border-radius: 5px; cursor: pointer; font-size: 15px; font-weight: bold; margin-right: 8px; }
+        .btn-primary { background: #2d5be3; color: #fff; }
+        .btn-danger { background: #e74c3c; color: #fff; }
+        .result-section { margin-top: 18px; background: #f8fafd; border-left: 4px solid #2d5be3; border-radius: 6px; padding: 12px; }
+        .result-text { font-size: 1.1em; color: #222; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖌️ 숫자 그림판 - AI 숫자 인식</h1>
+            <p>마우스로 0~9 중 하나의 숫자를 그려보세요!<br>AI가 어떤 숫자인지 예측해줍니다.</p>
+        </div>
+        <div class="main-content">
+            <div class="canvas-section">
+                <div class="canvas-container">
+                    <canvas id="drawingCanvas"></canvas>
+                </div>
+            </div> 
+            <div class="controls-section"> 
+                <div class="instructions">
+                    <ul>
+                        <li>마우스로 0~9 중 하나의 숫자를 그려주세요</li>
+                        <li>"분석하기" 버튼을 누르면 AI가 숫자를 예측합니다</li>
+                        <li>"지우기" 버튼으로 캔버스를 초기화할 수 있습니다</li>
+                        <li style="color:#d32f2f;font-weight:bold;">※ 숫자(0~9)만 인식 가능합니다!</li>
+                    </ul>
+                </div>
+                <button class="btn btn-primary" onclick="analyzeDrawing()">분석하기</button>
+                <button class="btn btn-danger" onclick="clearCanvas()">지우기</button>
+                <div class="result-section" id="resultSection" style="display: none;">
+                    <h3>분석 결과</h3>
+                    <p class="result-text" id="resultText"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let lastX = 0, lastY = 0;
+        function initCanvas() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        canvas.addEventListener('mousedown', e => {
+            isDrawing = true;
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        });
+        canvas.addEventListener('mousemove', e => {
+            if (!isDrawing) return;
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 10;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.stroke();
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        });
+        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('mouseout', () => isDrawing = false);
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('resultSection').style.display = 'none';
+        }
+        async function analyzeDrawing() {
+            const imageData = canvas.toDataURL('image/png');
+            const response = await fetch('/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: imageData })
+            });
+            const data = await response.json();
+            if (data.result) {
+                document.getElementById('resultText').textContent = data.result;
+                document.getElementById('resultSection').style.display = 'block';
+            } else {
+                document.getElementById('resultText').textContent = '오류: ' + data.error;
+                document.getElementById('resultSection').style.display = 'block';
+            }
+        }
+        // JS에서 canvas 크기를 부모(container)에 맞게 동적으로 설정
+        const container = document.querySelector('.canvas-container');
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        initCanvas();
+    </script>
+</body>
+</html> 
